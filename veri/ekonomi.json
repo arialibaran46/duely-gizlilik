@@ -1,0 +1,68 @@
+{
+  "v": 1,
+  "updated": "2026-11-19T11:49:20.764Z",
+  "source": "TCMB EVDS",
+  "items": [
+    {
+      "id": "tufe_yillik",
+      "label": "TÜFE (yıllık)",
+      "value": 29.77,
+      "unit": "%",
+      "period": "2026-10",
+      "change": 0.04,
+      "group": "inflation"
+    },
+    {
+      "id": "tufe_aylik",
+      "label": "TÜFE (aylık)",
+      "value": 2.58,
+      "unit": "%",
+      "period": "2026-10",
+      "group": "inflation"
+    },
+    {
+      "id": "kira_siniri",
+      "label": "Kira artış sınırı",
+      "value": 31.23,
+      "unit": "%",
+      "period": "2026-10",
+      "group": "inflation"
+    },
+    {
+      "id": "ufe_yillik",
+      "label": "Yİ-ÜFE (yıllık)",
+      "value": 27.41,
+      "unit": "%",
+      "period": "2026-10",
+      "change": 0.03,
+      "group": "inflation"
+    },
+    {
+      "id": "ihtiyac",
+      "label": "İhtiyaç kredisi",
+      "value": 59.2,
+      "unit": "%",
+      "period": "2026-11-06",
+      "change": 0.52,
+      "group": "rates"
+    },
+    {
+      "id": "tasit",
+      "label": "Taşıt kredisi",
+      "value": 39.16,
+      "unit": "%",
+      "period": "2026-11-06",
+      "change": -5.52,
+      "group": "rates"
+    },
+    {
+      "id": "konut",
+      "label": "Konut kredisi",
+      "value": 41.33,
+      "unit": "%",
+      "period": "2026-11-06",
+      "change": -0.16,
+      "group": "rates"
+    }
+  ]
+}
