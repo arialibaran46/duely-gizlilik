@@ -1,0 +1,38 @@
+name: Ekonomi verisi (TCMB EVDS)
+
+on:
+  schedule:
+    # her gün 07:30 (TSİ 10:30) — TÜFE ayın 3'ünde 10:00'da açıklanır
+    - cron: '30 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ekonomi
+  cancel-in-progress: false
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: EVDS'den çek
+        env:
+          EVDS_KEY: ${{ secrets.EVDS_KEY }}
+        run: node scripts/ekonomi.mjs
+      - name: Değiştiyse yayınla
+        run: |
+          if git diff --quiet -- veri/ekonomi.json && git ls-files --error-unmatch veri/ekonomi.json >/dev/null 2>&1; then
+            echo "Değişiklik yok"; exit 0
+          fi
+          git config user.name "duely-veri"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add veri/ekonomi.json
+          git commit -m "Ekonomi verisi $(date -u +%Y-%m-%d)"
+          git push
