@@ -13,7 +13,9 @@ const CHECK = process.argv.includes('--kontrol');
 
 // Her gösterge için aday seri kodları: ilk veri dönen kullanılır (TCMB kod değiştirirse yedek devreye girer).
 // Kodlar ilk çalıştırmada --kontrol ile doğrulanır; çıktıda hangi kodun kullanıldığı yazar.
-const CPI = ['TP.FG.J0'];               // TÜFE genel endeksi
+const CPI_GROUP = 'bie_tukfiy2025';     // TÜFE (2025=100) veri grubu
+const CPI = ['TP.FG.J0'];               // yedek: eski TÜFE (2003=100)
+const LOAN_GROUPS = ['bie_kt100h', 'bie_kt100'];
 const PPI = ['TP.TUFE1YI.T1'];          // Yİ-ÜFE genel endeksi
 const LOANS = [
   { id: 'ihtiyac', label: 'İhtiyaç kredisi', codes: ['TP.KTF10'] },
@@ -50,6 +52,15 @@ function normalizeDate(t) {
   if ((m = s.match(/^(\d{1,2})-(\d{4})$/))) return `${m[2]}-${pad(m[1])}`;
   if ((m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/))) return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
   return s;
+}
+
+/** Veri grubundaki seriler: [{ code, name }] */
+async function serieList(group) {
+  const res = await fetch(`${BASE}/serieList/type=json&code=${group}`, { headers: { key: KEY, Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`${group}: HTTP ${res.status}`);
+  const json = await res.json();
+  const arr = Array.isArray(json) ? json : (json.items ?? json.data ?? []);
+  return arr.map((x) => ({ code: x.SERIE_CODE ?? x.serieCode, name: x.SERIE_NAME ?? x.serieName ?? '' })).filter((x) => x.code);
 }
 
 async function firstWorking(codes, from, extra) {
@@ -97,14 +108,38 @@ async function main() {
   const report = [];
 
   const monthly = '&frequency=5&aggregationTypes=avg';
-  const cpi = await firstWorking(CPI, monthsAgo(30), monthly);
-  const c = indexStats(cpi.rows);
-  report.push(`TÜFE ${cpi.code} → ${c.period} yıllık %${c.yearly}, aylık %${c.monthly}, 12 ay ort. %${c.avg12}`);
-  items.push(
-    { id: 'tufe_yillik', label: 'TÜFE (yıllık)', value: c.yearly, unit: '%', period: c.period, change: c.yearlyChange, group: 'inflation' },
-    { id: 'tufe_aylik', label: 'TÜFE (aylık)', value: c.monthly, unit: '%', period: c.period, group: 'inflation' },
-    { id: 'kira_siniri', label: 'Kira artış sınırı', value: c.avg12, unit: '%', period: c.period, group: 'inflation' },
-  );
+  try {
+    // TÜİK 2026'da baz yılını 2025=100'e taşıdı: genel endeks yeni veri grubundan adına göre bulunur
+    let candidates = [];
+    try {
+      const list = await serieList(CPI_GROUP);
+      report.push(`${CPI_GROUP}: ${list.length} seri; ilk: ${list.slice(0, 4).map((x) => `${x.code} (${x.name})`).join(' | ')}`);
+      const general = list.filter((x) => /genel/i.test(x.name));
+      candidates = (general.length ? general : list.slice(0, 1)).map((x) => x.code);
+    } catch (e) {
+      report.push(`TÜFE seri listesi alınamadı: ${e.message}`);
+    }
+    const cpi = await firstWorking([...candidates, ...CPI], monthsAgo(30), monthly);
+    const c = indexStats(cpi.rows);
+    report.push(`TÜFE ${cpi.code} → ${c.period} yıllık %${c.yearly}, aylık %${c.monthly}, 12 ay ort. %${c.avg12}`);
+    items.push(
+      { id: 'tufe_yillik', label: 'TÜFE (yıllık)', value: c.yearly, unit: '%', period: c.period, change: c.yearlyChange, group: 'inflation' },
+      { id: 'tufe_aylik', label: 'TÜFE (aylık)', value: c.monthly, unit: '%', period: c.period, group: 'inflation' },
+      { id: 'kira_siniri', label: 'Kira artış sınırı', value: c.avg12, unit: '%', period: c.period, group: 'inflation' },
+    );
+  } catch (e) {
+    report.push(`TÜFE alınamadı: ${e.message}`);
+  }
+
+  // kredi faizi veri grupları: seri adları kayda yazılır (kodlar buradan doğrulanır)
+  for (const g of LOAN_GROUPS) {
+    try {
+      const list = await serieList(g);
+      report.push(`${g}: ${list.slice(0, 12).map((x) => `${x.code} (${x.name})`).join(' | ')}`);
+    } catch (e) {
+      report.push(`${g} listesi alınamadı: ${e.message}`);
+    }
+  }
 
   try {
     const ppi = await firstWorking(PPI, monthsAgo(30), monthly);
@@ -137,6 +172,7 @@ async function main() {
 
   console.log(report.join('\n'));
   if (CHECK) return;
+  if (items.length === 0) throw new Error('hiçbir gösterge alınamadı');
   // değerler makul aralıkta mı (bozuk veriyi yayınlama)
   for (const i of items) if (!(i.value > -50 && i.value < 500)) throw new Error(`${i.id} şüpheli değer: ${i.value}`);
   mkdirSync('veri', { recursive: true });
