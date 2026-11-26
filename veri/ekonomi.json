@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "updated": "2026-11-25T08:45:07.650Z",
+  "updated": "2026-11-26T17:50:14.030Z",
   "source": "TCMB EVDS",
   "items": [
     {
@@ -40,28 +40,28 @@
     {
       "id": "ihtiyac",
       "label": "İhtiyaç kredisi",
-      "value": 60.01,
+      "value": 59.26,
       "unit": "%",
-      "period": "2026-11-13",
-      "change": 0.81,
+      "period": "2026-11-20",
+      "change": -0.75,
       "group": "rates"
     },
     {
       "id": "tasit",
       "label": "Taşıt kredisi",
-      "value": 41.77,
+      "value": 42.03,
       "unit": "%",
-      "period": "2026-11-13",
-      "change": 2.61,
+      "period": "2026-11-20",
+      "change": 0.26,
       "group": "rates"
     },
     {
       "id": "konut",
       "label": "Konut kredisi",
-      "value": 41.35,
+      "value": 41.4,
       "unit": "%",
-      "period": "2026-11-13",
-      "change": 0.02,
+      "period": "2026-11-20",
+      "change": 0.05,
       "group": "rates"
     }
   ]
